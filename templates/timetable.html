@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Timetable{% endblock %}
+{% block page_title %}Exam Timetable{% endblock %}
+
+{% block content %}
+<div class="page-header mt-2">
+  <div>
+    <h2>Exam Timetable</h2>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+  </div>
+</div>
+
+{% if slots %}
+
+<!-- ── Timetable Summary Banner ── -->
+<div class="alert mb-4" style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:var(--radius);">
+  <i class="bi bi-check-circle-fill me-2" style="color:var(--accent);"></i>
+  <strong>{{ slots|length }} Time Slot(s)</strong> assigned to
+  <strong>{% set ns = namespace(count=0) %}{% for sn, sd in slots.items() %}{% set ns.count = ns.count + sd.subjects|length %}{% endfor %}{{ ns.count }} Subject(s)</strong>
+</div>
+
+<!-- ── Timetable Table ── -->
+<div class="card mb-4" id="printArea">
+  <div class="card-header d-flex align-items-center gap-2">
+    <i class="bi bi-calendar3-week-fill" style="color:var(--accent);"></i>
+    <span>Final Exam Schedule</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th style="width:60px;">Slot</th>
+          <th style="width:200px;">Time</th>
+          <th>Subjects Scheduled</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for slot_num, slot_data in slots.items() %}
+        {% set color_idx = slot_num - 1 %}
+        <tr>
+          <td>
+            <span class="slot-badge slot-{{ color_idx }}">{{ slot_num }}</span>
+          </td>
+          <td>
+            <span class="fw-500 small">{{ slot_data.label }}</span>
+          </td>
+          <td>
+            {% for subj in slot_data.subjects %}
+            <span class="badge me-1 mb-1 py-2 px-3"
+                  style="background:rgba(99,102,241,0.1);color:var(--accent);border:1px solid rgba(99,102,241,0.25);border-radius:8px;font-size:0.8rem;">
+              <strong>{{ subj.code }}</strong> — {{ subj.name }}
+            </span>
+            {% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Per-Slot Detail Cards ── -->
+<h5 class="fw-600 mb-3" style="font-size:0.95rem;color:var(--text-muted);">Slot Breakdown</h5>
+<div class="row g-3">
+  {% for slot_num, slot_data in slots.items() %}
+  {% set color_idx = slot_num - 1 %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center gap-2">
+        <span class="slot-badge slot-{{ color_idx }}">Slot {{ slot_num }}</span>
+        <span class="small fw-500 text-muted">{{ slot_data.label }}</span>
+      </div>
+      <div class="card-body">
+        {% for subj in slot_data.subjects %}
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge" style="background:var(--accent);border-radius:6px;font-size:0.72rem;">{{ subj.code }}</span>
+          <span class="small fw-500">{{ subj.name }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+
+<!-- ── Empty State ── -->
+<div class="card">
+  <div class="card-body">
+    <div class="empty-state py-5">
+      <i class="bi bi-calendar3 d-block" style="font-size:4rem;opacity:0.2;"></i>
+      <h5 class="mt-3">No Timetable Generated Yet</h5>
+      <p class="small text-muted mb-4">
+        Make sure you have added subjects, students, and enrollments,
+        then click the button below to run the Graph Coloring Algorithm.
+      </p>
+      <form action="{{ url_for('main.generate') }}" method="POST" id="generateForm">
+        <button type="submit" class="btn btn-accent px-5" data-loading>
+          <i class="bi bi-lightning-charge-fill me-2"></i>Generate Timetable Now
+        </button>
+      </form>
+      <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
+        <a href="{{ url_for('main.subjects') }}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-journal-bookmark-fill me-1"></i>Add Subjects
+        </a>
+        <a href="{{ url_for('main.students') }}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-people-fill me-1"></i>Add Students
+        </a>
+        <a href="{{ url_for('main.enrollments') }}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-link-45deg me-1"></i>Set Enrollments
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+
+# Database
+instance/
+*.db
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store
+
+# System Artifacts
+walkthrough.md
+implementation_plan.md
+task.md
+
+# Temporary files
+/tmp/
+*.log

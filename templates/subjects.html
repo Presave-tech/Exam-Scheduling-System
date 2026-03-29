@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Subjects{% endblock %}
+{% block page_title %}Manage Subjects{% endblock %}
+
+{% block content %}
+<div class="page-header mt-2">
+  <div>
+    <h2>Subjects</h2>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Add Subject Form -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-plus-circle me-2"></i>Add New Subject</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('main.subjects') }}">
+          <div class="mb-3">
+            <label class="form-label">Subject Code *</label>
+            <input type="text" name="code" class="form-control"
+                   placeholder="e.g. TCS402" required maxlength="20" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Subject Name *</label>
+            <input type="text" name="name" class="form-control"
+                   placeholder="e.g. Design and Analysis of Algorithms" required maxlength="100" />
+          </div>
+          <button type="submit" class="btn btn-accent w-100">
+            <i class="bi bi-plus-lg me-2"></i>Add Subject
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subject List -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-list-ul me-2"></i>All Subjects</span>
+        <span class="badge rounded-pill" style="background:var(--accent);">{{ subjects|length }}</span>
+      </div>
+      {% if subjects %}
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Code</th>
+              <th>Name</th>
+              <th>Enrollments</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in subjects %}
+            <tr>
+              <td class="text-muted">{{ loop.index }}</td>
+              <td><span class="fw-600 badge rounded-pill" style="background:var(--accent);color:#fff;font-size:0.78rem;">{{ s.code }}</span></td>
+              <td class="fw-500">{{ s.name }}</td>
+              <td><span class="text-muted">{{ s.enrollments|length }}</span></td>
+              <td>
+                <form method="POST" action="{{ url_for('main.delete_subject', subject_id=s.id) }}"
+                      onsubmit="return confirm('Delete {{ s.code }}? This also removes its enrollments and timetable entry.')">
+                  <button class="btn btn-sm btn-outline-danger rounded-3">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="bi bi-journal-bookmark-fill d-block"></i>
+        <h5>No Subjects Yet</h5>
+        <p class="small">Add your first subject using the form on the left.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

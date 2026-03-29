@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Students{% endblock %}
+{% block page_title %}Manage Students{% endblock %}
+
+{% block content %}
+<div class="page-header mt-2">
+  <div>
+    <h2>Students</h2>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Add Student Form -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-person-plus-fill me-2"></i>Add New Student</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('main.students') }}">
+          <div class="mb-3">
+            <label class="form-label">Roll Number *</label>
+            <input type="text" name="roll_no" class="form-control"
+                   required maxlength="20" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Full Name *</label>
+            <input type="text" name="name" class="form-control"
+                   required maxlength="100" />
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control"
+                   maxlength="120" />
+          </div>
+          <button type="submit" class="btn btn-accent w-100">
+            <i class="bi bi-plus-lg me-2"></i>Add Student
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student List -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-people-fill me-2"></i>All Students</span>
+        <span class="badge rounded-pill" style="background:var(--success);">{{ students|length }}</span>
+      </div>
+      {% if students %}
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Roll No.</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Subjects</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for st in students %}
+            <tr>
+              <td class="text-muted">{{ loop.index }}</td>
+              <td><code class="small">{{ st.roll_no }}</code></td>
+              <td class="fw-500">{{ st.name }}</td>
+              <td class="text-muted small">{{ st.email or '—' }}</td>
+              <td><span class="text-muted">{{ st.enrollments|length }}</span></td>
+              <td>
+                <form method="POST" action="{{ url_for('main.delete_student', student_id=st.id) }}"
+                      onsubmit="return confirm('Delete student {{ st.name }}? Their enrollments will also be removed.')">
+                  <button class="btn btn-sm btn-outline-danger rounded-3">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="bi bi-people-fill d-block"></i>
+        <h5>No Students Yet</h5>
+        <p class="small">Add your first student using the form on the left.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
