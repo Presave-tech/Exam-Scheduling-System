@@ -9,8 +9,8 @@ class Config:
     # Secret key for session management
     SECRET_KEY = os.environ.get("SECRET_KEY", "daa-exam-scheduler-secret-2024")
 
-    # SQLite database URI – stored in instance/ folder
-    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(BASE_DIR, "instance", "exam.db")
+    # MySQL database URI (XAMPP Default: user root, no password)
+    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root@localhost/exam_db"
 
     # Disable modification tracking (not needed, saves memory)
     SQLALCHEMY_TRACK_MODIFICATIONS = False

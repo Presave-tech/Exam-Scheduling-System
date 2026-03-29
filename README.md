@@ -1,9 +1,48 @@
-# 📅 Automated Exam Timetable Scheduling System
-### Using Graph Coloring Algorithm | DAA Project
+# Automated Exam Scheduling System
 
-> A full-stack web application that generates **conflict-free exam timetables** using the **Greedy Graph Coloring Algorithm** — a classic problem from **Design and Analysis of Algorithms (DAA)**.
+A full-stack web application that generates conflict-free exam timetables using the **Greedy Graph Coloring Algorithm**.
 
 ---
+
+## 🛠 Team Setup & Installation
+
+Follow these steps to get the project running on your local machine:
+
+### 1. Prerequisites
+- **Python 3.10+** installed.
+- **XAMPP** (for the MySQL database).
+- **Git** (for cloning the repository).
+
+### 2. Initial Setup
+```powershell
+# Clone the repository
+git clone <YOUR_GITHUB_REPO_URL>
+cd daa_pbl
+
+# Create and activate virtual environment
+python -m venv venv
+venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 3. Database Setup (XAMPP)
+1. Open the **XAMPP Control Panel**.
+2. Start **Apache** and **MySQL**.
+3. Go to [localhost/phpmyadmin](http://localhost/phpmyadmin).
+4. Create a new database named **`exam_db`**.
+   - *Note: The system uses default XAMPP credentials (user: `root`, no password).*
+
+### 4. Running the Application
+```powershell
+python run.py
+```
+Visit **http://127.0.0.1:5000** in your browser. The tables will be created automatically on the first run.
+
+---
+
+## 🚀 How to Use
 
 ## 🗂️ Project Structure
 
