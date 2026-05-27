@@ -92,13 +92,21 @@
               </div>
             </a>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
             <a href="{{ url_for('main.timetable') }}" class="btn btn-primary btn-lg w-100 text-center rounded-3 py-4 shadow-sm h-100 d-flex flex-column align-items-center justify-content-center">
               <i class="bi bi-calendar3-week fs-1 mb-2"></i>
               <div class="fw-bold">View Timetable</div>
             </a>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
+            <form action="{{ url_for('main.load_sample') }}" method="POST" class="h-100 m-0">
+              <button type="submit" class="btn btn-outline-info btn-lg w-100 text-center rounded-3 py-4 shadow-sm h-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="bi bi-database-fill-add fs-1 mb-2"></i>
+                <div class="fw-bold">Load Sample Data</div>
+              </button>
+            </form>
+          </div>
+          <div class="col-md-4">
             <form action="{{ url_for('main.clear_timetable') }}" method="POST" class="h-100 m-0" onsubmit="return confirm('Clear all timetable entries?')">
               <button class="btn btn-outline-danger btn-lg w-100 text-center rounded-3 py-4 shadow-sm h-100 d-flex flex-column align-items-center justify-content-center">
                 <i class="bi bi-trash3 fs-1 mb-2"></i>
@@ -106,6 +114,7 @@
               </button>
             </form>
           </div>
+
         </div>
       </div>
     </div>

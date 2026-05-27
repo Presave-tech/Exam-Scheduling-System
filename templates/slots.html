@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Time Slots{% endblock %}
+{% block page_title %}Time Slot Settings{% endblock %}
+
+{% block content %}
+<div class="row g-4 mt-2">
+  
+  <!-- Left Column: Slots Table List -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+      <div class="card-header bg-white border-bottom-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-primary me-2"></i>Active Exam Time Slots</h5>
+          <p class="small text-muted mb-0">These labels represent time slots mapped to algorithm color results.</p>
+        </div>
+        <form action="{{ url_for('main.manage_slots') }}" method="POST" onsubmit="return confirm('Reset all slots to default? This will wipe your custom configurations.')" class="m-0">
+          <input type="hidden" name="action" value="reset">
+          <button type="submit" class="btn btn-sm btn-outline-danger px-3">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Reset to Defaults
+          </button>
+        </form>
+      </div>
+
+      <div class="card-body p-4 pt-2">
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th style="width: 100px;">Slot Num</th>
+                <th>Time Label / Description</th>
+                <th style="width: 120px;" class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for slot in slots %}
+              {% set color_idx = slot.slot_number - 1 %}
+              <tr>
+                <td>
+                  <span class="slot-badge slot-{{ color_idx % 10 }}">{{ slot.slot_number }}</span>
+                </td>
+                <td>
+                  <span class="fw-500" id="labelSpan-{{ slot.id }}">{{ slot.label }}</span>
+                  
+                  <!-- Inline Edit Form (Hidden by default) -->
+                  <form action="{{ url_for('main.manage_slots') }}" method="POST" id="editForm-{{ slot.id }}" style="display:none;" class="m-0">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" name="slot_id" value="{{ slot.id }}">
+                    <div class="input-group input-group-sm" style="max-width: 350px;">
+                      <input type="text" name="label" class="form-control" value="{{ slot.label }}" required>
+                      <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i></button>
+                      <button type="button" class="btn btn-outline-secondary" onclick="toggleEdit({{ slot.id }})"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                  </form>
+                </td>
+                <td class="text-end">
+                  <button type="button" class="btn btn-sm btn-outline-primary" id="editBtn-{{ slot.id }}" onclick="toggleEdit({{ slot.id }})">
+                    <i class="bi bi-pencil-fill"></i>
+                  </button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Add/Delete Configurations -->
+  <div class="col-lg-4">
+    <!-- Add Slot Form -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+      <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+        <h5 class="fw-bold mb-0"><i class="bi bi-plus-circle text-primary me-2"></i>Add Time Slot</h5>
+      </div>
+      <div class="card-body p-4 pt-2">
+        <p class="small text-muted mb-3">Add a new time slot at the end of the sequence. Color will be assigned sequentially.</p>
+        
+        <form action="{{ url_for('main.manage_slots') }}" method="POST">
+          <input type="hidden" name="action" value="add">
+          <div class="mb-3">
+            <label class="form-label small fw-600">Slot Label</label>
+            <input type="text" name="label" class="form-control" placeholder="e.g. Day 6 — 9:00 AM" required>
+          </div>
+          <button type="submit" class="btn btn-accent w-100 py-2">
+            <i class="bi bi-plus-lg me-1"></i>Add Sequential Slot
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Undo / Delete Last Slot -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+      <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+        <h5 class="fw-bold mb-0"><i class="bi bi-dash-circle text-danger me-2"></i>Delete Last Slot</h5>
+      </div>
+      <div class="card-body p-4 pt-2">
+        <p class="small text-muted mb-3">Removes the highest sequential slot number to maintain integrity.</p>
+        
+        <form action="{{ url_for('main.manage_slots') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete the last time slot?')">
+          <input type="hidden" name="action" value="delete">
+          <button type="submit" class="btn btn-outline-danger w-100 py-2">
+            <i class="bi bi-trash-fill me-1"></i>Delete Highest Slot
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function toggleEdit(slotId) {
+    const span = document.getElementById(`labelSpan-${slotId}`);
+    const form = document.getElementById(`editForm-${slotId}`);
+    const btn = document.getElementById(`editBtn-${slotId}`);
+
+    if (form.style.display === 'none') {
+      span.style.display = 'none';
+      btn.style.display = 'none';
+      form.style.display = 'block';
+      form.querySelector('input[type="text"]').focus();
+    } else {
+      form.style.display = 'none';
+      span.style.display = 'inline';
+      btn.style.display = 'inline-block';
+    }
+  }
+</script>
+{% endblock %}

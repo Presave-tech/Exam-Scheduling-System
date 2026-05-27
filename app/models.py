@@ -78,3 +78,19 @@ class TimetableEntry(db.Model):
 
     def __repr__(self):
         return f"<TimetableEntry subject={self.subject_id} slot={self.slot_number}>"
+
+
+class TimeSlot(db.Model):
+    """
+    Stores time slots configured by the administrator.
+    If no custom slots are configured, we default to the predefined ones.
+    """
+    __tablename__ = "time_slots"
+
+    id          = db.Column(db.Integer, primary_key=True)
+    slot_number = db.Column(db.Integer, unique=True, nullable=False) # 1-based slot index (color + 1)
+    label       = db.Column(db.String(100), nullable=False)          # e.g. "Day 1 — 9:00 AM"
+
+    def __repr__(self):
+        return f"<TimeSlot {self.slot_number}: {self.label}>"
+

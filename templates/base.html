@@ -61,6 +61,18 @@
         <i class="bi bi-calendar3-week-fill"></i> Timetable
       </a>
     </li>
+    <li class="sidebar-item {% if request.endpoint == 'main.graph_vis' %}active{% endif %}">
+      <a href="{{ url_for('main.graph_vis') }}" class="sidebar-link">
+        <i class="bi bi-diagram-3-fill"></i> Conflict Graph
+      </a>
+    </li>
+
+    <li class="nav-section-label">Administration</li>
+    <li class="sidebar-item {% if request.endpoint == 'main.manage_slots' %}active{% endif %}">
+      <a href="{{ url_for('main.manage_slots') }}" class="sidebar-link">
+        <i class="bi bi-gear-fill"></i> Time Slots
+      </a>
+    </li>
   </ul>
 </nav>
 

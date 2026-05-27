@@ -18,6 +18,7 @@ Phase 2 (TODO): /graph visualization, /export/pdf
 
 import csv
 import io
+import time
 from flask import (Blueprint, render_template, request,
                    redirect, url_for, flash, jsonify,
                    make_response, current_app)
@@ -225,7 +226,14 @@ def clear_timetable():
 # ──────────────────────────────────────────────────────────────
 #  LOAD SAMPLE DATA
 # ──────────────────────────────────────────────────────────────
-# Load sample data route has been removed.
+@main.route("/load-sample", methods=["POST"])
+def load_sample():
+    """Triggers loading of sample academic data."""
+    from app.scheduler import load_sample_data
+    result = load_sample_data()
+    flash(result["message"], "success")
+    return redirect(url_for("main.index"))
+
 
 
 # ──────────────────────────────────────────────────────────────
@@ -257,6 +265,193 @@ def api_conflicts():
 
 
 # ──────────────────────────────────────────────────────────────
+#  INTERACTIVE CONFLICT GRAPH (VIS.JS)
+# ──────────────────────────────────────────────────────────────
+@main.route("/graph")
+def graph_vis():
+    """Render the Interactive Conflict Graph Visualization page."""
+    return render_template("graph_vis.html")
+
+
+@main.route("/api/graph-data")
+def api_graph_data():
+    """
+    Returns JSON structured for vis.js network diagram:
+      { nodes: [...], edges: [...] }
+    Includes timetable slot coloring and degree-based node sizing.
+    """
+    from app.graph import ConflictGraph
+    subjects    = Subject.query.all()
+    enrollments = Enrollment.query.all()
+
+    graph = ConflictGraph()
+    graph.build_from_enrollments(subjects, enrollments)
+
+    # Fetch existing timetable mapping
+    entries = TimetableEntry.query.all()
+    entry_map = {e.subject_id: e for e in entries}
+
+    # Color palette
+    HEX_COLORS = [
+        "#6366F1",  # Indigo
+        "#10B981",  # Emerald
+        "#F59E0B",  # Amber
+        "#EF4444",  # Rose
+        "#3B82F6",  # Blue
+        "#EC4899",  # Pink
+        "#8B5CF6",  # Violet
+        "#14B8A6",  # Teal
+        "#F43F5E",  # Rose
+        "#84CC16"   # Lime
+    ]
+
+    nodes = []
+    for s in subjects:
+        degree = len(graph.adjacency.get(s.id, []))
+        entry = entry_map.get(s.id)
+        
+        node_color = "#E5E7EB"  # default gray
+        font_color = "#1F2937"  # dark font
+        
+        slot_info = "Not scheduled yet"
+        if entry is not None:
+            c_idx = entry.color % len(HEX_COLORS)
+            node_color = HEX_COLORS[c_idx]
+            # Since shape is 'dot', labels are drawn outside the node on the white canvas.
+            # We must use a dark font color so it's visible against the white background.
+            font_color = "#1F2937"
+            slot_info = f"Slot {entry.slot_number} ({entry.slot_label})"
+
+        nodes.append({
+            "id": s.id,
+            "label": f"{s.code}\n{s.name}",
+            "slot_info": slot_info,
+            "color": {
+                "background": node_color,
+                "border": node_color,
+                "highlight": {
+                    "background": node_color,
+                    "border": "#1F2937"
+                }
+            },
+            "font": {
+                "color": font_color, 
+                "size": 14, 
+                "bold": True,
+                "strokeWidth": 3,
+                "strokeColor": "#FFFFFF"
+            },
+            "value": 10 + degree * 4,  # node sizing based on degree
+            "shape": "dot"
+        })
+
+    edges = []
+    for u, v in graph.get_conflict_pairs():
+        edges.append({
+            "from": u,
+            "to": v,
+            "color": {"color": "#CBD5E1", "highlight": "#6366F1"},
+            "width": 1.5
+        })
+
+    return jsonify({"nodes": nodes, "edges": edges})
+
+
+
 #  EXPORT — CSV
 # ──────────────────────────────────────────────────────────────
-# Export CSV route has been removed.
+@main.route("/export/csv")
+def export_csv():
+    """Generates a downloadable CSV of the currently generated timetable."""
+    entries = (
+        db.session.query(TimetableEntry, Subject)
+        .join(Subject, TimetableEntry.subject_id == Subject.id)
+        .order_by(TimetableEntry.slot_number, Subject.code)
+        .all()
+    )
+
+    if not entries:
+        flash("No timetable exists to export. Please generate one first.", "warning")
+        return redirect(url_for("main.timetable"))
+
+    # Create CSV in-memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write CSV header
+    writer.writerow(["Slot Number", "Slot Time/Label", "Subject Code", "Subject Name"])
+    
+    # Write CSV data rows
+    for entry, subj in entries:
+        writer.writerow([entry.slot_number, entry.slot_label, subj.code, subj.name])
+        
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = "attachment; filename=exam_timetable.csv"
+    response.headers["Content-Type"] = "text/csv"
+    return response
+
+
+# ──────────────────────────────────────────────────────────────
+#  TIME SLOT CONFIGURATION
+# ──────────────────────────────────────────────────────────────
+@main.route("/slots", methods=["GET", "POST"])
+def manage_slots():
+    """List, add, edit, and reset exam time slots."""
+    from app.models import TimeSlot
+    
+    if request.method == "POST":
+        action = request.form.get("action")
+        
+        if action == "add":
+            label = request.form.get("label", "").strip()
+            if not label:
+                flash("Time slot label cannot be empty.", "danger")
+            else:
+                # Find the next slot number
+                max_slot = db.session.query(db.func.max(TimeSlot.slot_number)).scalar() or 0
+                new_slot = TimeSlot(slot_number=max_slot + 1, label=label)
+                db.session.add(new_slot)
+                db.session.commit()
+                flash(f"Slot {max_slot + 1} ('{label}') added successfully.", "success")
+                
+        elif action == "edit":
+            slot_id = request.form.get("slot_id", type=int)
+            label = request.form.get("label", "").strip()
+            slot = TimeSlot.query.get(slot_id)
+            if slot and label:
+                slot.label = label
+                db.session.commit()
+                flash(f"Slot {slot.slot_number} label updated to '{label}'.", "success")
+                
+        elif action == "delete":
+            # Delete the maximum slot number (must maintain sequential slots)
+            max_slot = db.session.query(db.func.max(TimeSlot.slot_number)).scalar()
+            if max_slot:
+                slot = TimeSlot.query.filter_by(slot_number=max_slot).first()
+                db.session.delete(slot)
+                db.session.commit()
+                flash(f"Deleted the last time slot (Slot {max_slot}).", "info")
+            else:
+                flash("No slots left to delete.", "warning")
+                
+        elif action == "reset":
+            TimeSlot.query.delete()
+            default_labels = [
+                "Day 1 — 9:00 AM", "Day 1 — 1:00 PM",
+                "Day 2 — 9:00 AM", "Day 2 — 1:00 PM",
+                "Day 3 — 9:00 AM", "Day 3 — 1:00 PM",
+                "Day 4 — 9:00 AM", "Day 4 — 1:00 PM",
+                "Day 5 — 9:00 AM", "Day 5 — 1:00 PM",
+            ]
+            for idx, label in enumerate(default_labels):
+                db.session.add(TimeSlot(slot_number=idx + 1, label=label))
+            db.session.commit()
+            flash("Time slots reset to default standard schedule.", "info")
+            
+        return redirect(url_for("main.manage_slots"))
+
+    # Fetch slots
+    slots = TimeSlot.query.order_by(TimeSlot.slot_number).all()
+    return render_template("slots.html", slots=slots)
+
+

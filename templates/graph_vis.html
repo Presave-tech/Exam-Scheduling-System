@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% block title %}Conflict Graph{% endblock %}
+{% block page_title %}Conflict Graph Visualization{% endblock %}
+
+{% block head %}
+<!-- vis.js Network CDN -->
+<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<style>
+  #network-container {
+    width: 100%;
+    height: 600px;
+    background-color: #F8FAFC;
+    border-radius: 12px;
+    position: relative;
+    border: 1px solid #E2E8F0;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03);
+  }
+  
+  .network-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .floating-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 10;
+    display: flex;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .node-details-card {
+    transition: all 0.3s ease;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 mt-2">
+  <!-- Left Side: Interactive Network -->
+  <div class="col-xl-9">
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+      <div class="card-header bg-white border-bottom-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="fw-bold mb-1"><i class="bi bi-bezier2 text-primary me-2"></i>Conflict Graph Network</h5>
+          <p class="small text-muted mb-0">Drag nodes to organize. Hover over subjects to see direct conflicts.</p>
+        </div>
+      </div>
+      <div class="card-body p-4 pt-2 position-relative">
+        <div id="network-container">
+          <!-- Floating Zoom/Physics Controls -->
+          <div class="floating-controls">
+            <button class="btn btn-sm btn-light border-0" id="btnFit" title="Fit Network">
+              <i class="bi bi-arrows-fullscreen text-secondary"></i>
+            </button>
+            <button class="btn btn-sm btn-light border-0" id="btnPhysics" title="Toggle Physics (Freeze)">
+              <i class="bi bi-pause-fill text-secondary" id="physicsIcon"></i>
+            </button>
+            <button class="btn btn-sm btn-light border-0" id="btnZoomIn" title="Zoom In">
+              <i class="bi bi-zoom-in text-secondary"></i>
+            </button>
+            <button class="btn btn-sm btn-light border-0" id="btnZoomOut" title="Zoom Out">
+              <i class="bi bi-zoom-out text-secondary"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color Legend -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+      <div class="card-body p-4">
+        <h6 class="fw-bold mb-3"><i class="bi bi-palette me-2 text-primary"></i>Time Slot Colors Legend</h6>
+        <div class="network-legend">
+          <div class="legend-item" style="background: rgba(99,102,241,0.1); border-color: #6366F1;"><span style="width:10px;height:10px;border-radius:50%;background:#6366F1;"></span>Slot 1</div>
+          <div class="legend-item" style="background: rgba(16,185,129,0.1); border-color: #10B981;"><span style="width:10px;height:10px;border-radius:50%;background:#10B981;"></span>Slot 2</div>
+          <div class="legend-item" style="background: rgba(245,158,11,0.1); border-color: #F59E0B;"><span style="width:10px;height:10px;border-radius:50%;background:#F59E0B;"></span>Slot 3</div>
+          <div class="legend-item" style="background: rgba(239,68,68,0.1); border-color: #EF4444;"><span style="width:10px;height:10px;border-radius:50%;background:#EF4444;"></span>Slot 4</div>
+          <div class="legend-item" style="background: rgba(59,130,246,0.1); border-color: #3B82F6;"><span style="width:10px;height:10px;border-radius:50%;background:#3B82F6;"></span>Slot 5</div>
+          <div class="legend-item" style="background: rgba(236,72,153,0.1); border-color: #EC4899;"><span style="width:10px;height:10px;border-radius:50%;background:#EC4899;"></span>Slot 6</div>
+          <div class="legend-item" style="background: rgba(139,92,246,0.1); border-color: #8B5CF6;"><span style="width:10px;height:10px;border-radius:50%;background:#8B5CF6;"></span>Slot 7</div>
+          <div class="legend-item" style="background: rgba(20,184,166,0.1); border-color: #14B8A6;"><span style="width:10px;height:10px;border-radius:50%;background:#14B8A6;"></span>Slot 8</div>
+          <div class="legend-item" style="background: rgba(244,63,94,0.1); border-color: #F43F5E;"><span style="width:10px;height:10px;border-radius:50%;background:#F43F5E;"></span>Slot 9</div>
+          <div class="legend-item" style="background: rgba(132,204,22,0.1); border-color: #84CC16;"><span style="width:10px;height:10px;border-radius:50%;background:#84CC16;"></span>Slot 10+</div>
+          <div class="legend-item" style="background: rgba(229,231,235,1); border-color: #D1D5DB; color:#4B5563;"><span style="width:10px;height:10px;border-radius:50%;background:#D1D5DB;"></span>Unscheduled</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Live Node Details Panel -->
+  <div class="col-xl-3">
+    <div class="card shadow-sm border-0 rounded-4 node-details-card mb-4" id="detailsCard">
+      <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+        <h5 class="fw-bold mb-0"><i class="bi bi-info-circle text-primary me-2"></i>Subject Details</h5>
+      </div>
+      <div class="card-body p-4 pt-2">
+        <div id="detailsPlaceholder" class="text-center py-5">
+          <i class="bi bi-hand-index fs-1 opacity-25 d-block mb-3"></i>
+          <p class="small text-muted mb-0">Click any subject node in the graph to view active conflicts and scheduling info.</p>
+        </div>
+
+        <div id="detailsContent" style="display:none;">
+          <div class="mb-4">
+            <span class="badge bg-primary mb-2" id="detailCode" style="font-size: 0.85rem; padding: 6px 12px; border-radius: 6px;">CS201</span>
+            <h5 class="fw-bold" id="detailName">Data Structures</h5>
+          </div>
+
+          <div class="mb-3">
+            <label class="small text-muted d-block">Scheduled Time Slot</label>
+            <div id="detailSlot" class="fw-bold small text-primary">Slot 2 (Day 1 — 1:00 PM)</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="small text-muted d-block">Degree of Conflicts</label>
+            <div id="detailDegree" class="fw-bold fs-4">3 <span class="small text-muted fs-6" style="font-weight:normal;">overlapping courses</span></div>
+          </div>
+
+          <hr class="my-3 opacity-25">
+
+          <h6 class="fw-bold small mb-2"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Direct Conflicts</h6>
+          <div class="list-group list-group-flush" id="detailConflictsList">
+            <!-- Dynamically populated conflicts -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let network = null;
+  let allNodes = [];
+  let allEdges = [];
+  let isPhysicsEnabled = true;
+
+  document.addEventListener("DOMContentLoaded", function() {
+    // 1. Fetch data and construct graph
+    fetch('/api/graph-data')
+      .then(res => res.json())
+      .then(data => {
+        allNodes = data.nodes;
+        allEdges = data.edges;
+        
+        const container = document.getElementById('network-container');
+        const graphData = {
+          nodes: new vis.DataSet(data.nodes),
+          edges: new vis.DataSet(data.edges)
+        };
+
+        const options = {
+          nodes: {
+            shape: 'dot',
+            scaling: {
+              min: 10,
+              max: 30,
+              label: {
+                enabled: true,
+                min: 10,
+                max: 12
+              }
+            },
+            shadow: {
+              enabled: true,
+              color: 'rgba(0,0,0,0.06)',
+              size: 4,
+              x: 0,
+              y: 2
+            }
+          },
+          edges: {
+            smooth: {
+              type: 'continuous',
+              roundness: 0.3
+            },
+            color: {
+              color: '#CBD5E1',
+              highlight: '#6366F1',
+              hover: '#94A3B8'
+            }
+          },
+          interaction: {
+            hover: true,
+            tooltipDelay: 200,
+            navigationButtons: false,
+            dragNodes: false,
+            dragView: false
+          },
+          physics: {
+            barnesHut: {
+              gravitationalConstant: -3000,
+              centralGravity: 0.3,
+              springLength: 95,
+              springConstant: 0.04,
+              damping: 0.09,
+              avoidOverlap: 0.1
+            },
+            stabilization: {
+              iterations: 150,
+              updateInterval: 25
+            }
+          }
+        };
+
+        // Initialize Network
+        network = new vis.Network(container, graphData, options);
+
+        // 2. Select Node Click Event
+        network.on("selectNode", function(params) {
+          const selectedNodeId = params.nodes[0];
+          showNodeDetails(selectedNodeId);
+        });
+
+        // 3. Deselect event
+        network.on("deselectNode", function() {
+          hideNodeDetails();
+        });
+
+        // Setup floating controls
+        document.getElementById('btnFit').addEventListener('click', () => {
+          network.fit({ animation: { duration: 1000, easingFunction: 'easeInOutQuad' } });
+        });
+
+        document.getElementById('btnPhysics').addEventListener('click', () => {
+          isPhysicsEnabled = !isPhysicsEnabled;
+          network.setOptions({ physics: { enabled: isPhysicsEnabled } });
+          const icon = document.getElementById('physicsIcon');
+          const btn = document.getElementById('btnPhysics');
+          if (isPhysicsEnabled) {
+            icon.className = "bi bi-pause-fill text-secondary";
+            btn.title = "Toggle Physics (Freeze)";
+          } else {
+            icon.className = "bi bi-play-fill text-primary";
+            btn.title = "Toggle Physics (Active)";
+          }
+        });
+
+        document.getElementById('btnZoomIn').addEventListener('click', () => {
+          network.moveTo({ scale: network.getScale() * 1.25, animation: true });
+        });
+
+        document.getElementById('btnZoomOut').addEventListener('click', () => {
+          network.moveTo({ scale: network.getScale() * 0.8, animation: true });
+        });
+      })
+      .catch(err => {
+        console.error("Error loading graph data: ", err);
+      });
+  });
+
+  function showNodeDetails(nodeId) {
+    const node = allNodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    // Set core text details
+    const cleanLabel = node.label.replace('\n', ' — ');
+    document.getElementById('detailCode').innerText = node.label.split('\n')[0];
+    document.getElementById('detailName').innerText = node.label.split('\n')[1] || cleanLabel;
+    
+    // Use slot_info directly instead of parsing title
+    document.getElementById('detailSlot').innerText = node.slot_info || "Not scheduled yet";
+
+    // Find direct conflicting neighbors
+    const neighbors = allEdges.filter(e => e.from === nodeId || e.to === nodeId)
+                              .map(e => e.from === nodeId ? e.to : e.from);
+    
+    document.getElementById('detailDegree').innerHTML = `${neighbors.length} <span class="small text-muted fs-6" style="font-weight:normal;">overlapping courses</span>`;
+
+    // Populate conflict list
+    const listGroup = document.getElementById('detailConflictsList');
+    listGroup.innerHTML = '';
+
+    if (neighbors.length === 0) {
+      listGroup.innerHTML = `
+        <div class="text-center py-3 text-muted small">
+          <i class="bi bi-emoji-smile d-block fs-4 mb-1"></i>
+          Isolated subject. Zero conflicts!
+        </div>
+      `;
+    } else {
+      neighbors.forEach(nbId => {
+        const nbNode = allNodes.find(n => n.id === nbId);
+        if (nbNode) {
+          const nbCode = nbNode.label.split('\n')[0];
+          const nbName = nbNode.label.split('\n')[1] || nbNode.label;
+          listGroup.innerHTML += `
+            <div class="list-group-item d-flex align-items-center gap-2 border-0 px-0 py-2">
+              <span class="badge bg-secondary text-white" style="font-size:0.75rem;">${nbCode}</span>
+              <span class="small text-truncate" title="${nbName}">${nbName}</span>
+            </div>
+          `;
+        }
+      });
+    }
+
+    // Slide in panels
+    document.getElementById('detailsPlaceholder').style.display = 'none';
+    document.getElementById('detailsContent').style.display = 'block';
+  }
+
+  function hideNodeDetails() {
+    document.getElementById('detailsContent').style.display = 'none';
+    document.getElementById('detailsPlaceholder').style.display = 'block';
+  }
+</script>
+{% endblock %}
